@@ -148,4 +148,8 @@ public class ShibbolethClient {
 		return client.getHttpClient().execute(httpPost);
 	}
 
+	public void shutdown() {
+		this.client.shutdown();
+	}
+
 }
