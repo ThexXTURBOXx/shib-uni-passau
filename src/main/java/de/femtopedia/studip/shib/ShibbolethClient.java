@@ -14,7 +14,6 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
@@ -25,11 +24,6 @@ public class ShibbolethClient {
 
 	public ShibbolethClient() {
 		this.client = new ApacheHttpTransport.Builder().build();
-	}
-
-	public ShibbolethClient(List<Cookie> cookies) {
-		this.client = new ApacheHttpTransport.Builder().build();
-		cookies.forEach(c -> this.getCookieStore().addCookie(c));
 	}
 
 	public static List<String> readLines(InputStream input) throws IOException {
@@ -50,7 +44,7 @@ public class ShibbolethClient {
 	}
 
 	public boolean isSessionValid() throws IOException {
-		return get("https://studip.uni-passau.de/studip/api.php").getStatusLine().getStatusCode() == 404;
+		return get("https://studip.uni-passau.de/studip/api.php").getStatusLine().getStatusCode() != 401;
 	}
 
 	private void authenticate(String username, String password) throws IOException, IllegalArgumentException, IllegalAccessException, IllegalStateException {
