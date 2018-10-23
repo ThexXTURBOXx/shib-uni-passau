@@ -14,14 +14,23 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.AbstractHttpClient;
-import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
 
 public class ShibbolethClient {
 
 	public ApacheHttpTransport client;
+
+	public ShibbolethClient() {
+		this.client = new ApacheHttpTransport.Builder().build();
+	}
+
+	public ShibbolethClient(List<Cookie> cookies) {
+		this.client = new ApacheHttpTransport.Builder().build();
+		cookies.forEach(c -> this.getCookieStore().addCookie(c));
+	}
 
 	public static List<String> readLines(InputStream input) throws IOException {
 		InputStreamReader reader = new InputStreamReader(input);
@@ -35,14 +44,19 @@ public class ShibbolethClient {
 		return list;
 	}
 
-	public void authenticate(String username, String password) throws IOException, IllegalArgumentException, IllegalAccessException, IllegalStateException {
-		CookieStore cookies = new BasicCookieStore();
-		client = new ApacheHttpTransport.Builder().build();
-		//client = HttpClientBuilder.create().setDefaultCookieStore(cookies).disableRedirectHandling().build();
+	public void authenticateIfNeeded(String username, String password) throws IOException, IllegalArgumentException, IllegalAccessException, IllegalStateException {
+		if (!this.isSessionValid())
+			this.authenticate(username, password);
+	}
 
+	public boolean isSessionValid() throws IOException {
+		return get("https://studip.uni-passau.de/studip/api.php").getStatusLine().getStatusCode() == 404;
+	}
+
+	private void authenticate(String username, String password) throws IOException, IllegalArgumentException, IllegalAccessException, IllegalStateException {
 		get("https://studip.uni-passau.de/studip/index.php");
-		cookies.addCookie(createCookie("cache_session", Long.toString(System.currentTimeMillis()), "studip.uni-passau.de", "/"));
-		cookies.addCookie(createCookie("navigation-length", "3", "studip.uni-passau.de", "/studip/"));
+		getCookieStore().addCookie(createCookie("cache_session", Long.toString(System.currentTimeMillis()), "studip.uni-passau.de", "/"));
+		getCookieStore().addCookie(createCookie("navigation-length", "3", "studip.uni-passau.de", "/studip/"));
 
 		get("https://studip.uni-passau.de/studip/index.php?again=yes&sso=shib");
 
