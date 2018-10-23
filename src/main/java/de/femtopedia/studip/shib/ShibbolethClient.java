@@ -14,6 +14,7 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
@@ -86,6 +87,10 @@ public class ShibbolethClient {
 		String semurl = response8.getFirstHeader("location").getValue();
 
 		get(semurl);
+	}
+
+	public CookieStore getCookieStore() {
+		return ((AbstractHttpClient) this.client.getHttpClient()).getCookieStore();
 	}
 
 	public BasicClientCookie createCookie(String key, String value, String domain, String path) {
