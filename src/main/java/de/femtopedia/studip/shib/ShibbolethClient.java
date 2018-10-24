@@ -108,11 +108,18 @@ public class ShibbolethClient {
 		return c;
 	}
 
-	public HttpResponse get(String url) throws IOException, IllegalArgumentException {
+	public HttpResponse getIfValid(String url) throws IOException, IllegalAccessException {
+		if (!isSessionValid()) {
+			throw new IllegalAccessException("Session is not valid!");
+		}
+		return get(url);
+	}
+
+	private HttpResponse get(String url) throws IOException, IllegalArgumentException {
 		return get(url, new String[0], new String[0]);
 	}
 
-	public HttpResponse get(String url, String[] headerKeys, String[] headerVals) throws IOException, IllegalArgumentException {
+	private HttpResponse get(String url, String[] headerKeys, String[] headerVals) throws IOException, IllegalArgumentException {
 		if (headerKeys.length != headerVals.length)
 			throw new IllegalArgumentException("headerVals has different length than headerKeys!");
 		HttpGet httpGet = new HttpGet(url);
@@ -125,11 +132,11 @@ public class ShibbolethClient {
 		return post(url, new String[0], new String[0]);
 	}
 
-	public HttpResponse post(String url, String[] headerKeys, String[] headerVals) throws IOException, IllegalArgumentException {
+	private HttpResponse post(String url, String[] headerKeys, String[] headerVals) throws IOException, IllegalArgumentException {
 		return post(url, headerKeys, headerVals, null);
 	}
 
-	public HttpResponse post(String url, String[] headerKeys, String[] headerVals, List<NameValuePair> nvps) throws IOException, IllegalArgumentException {
+	private HttpResponse post(String url, String[] headerKeys, String[] headerVals, List<NameValuePair> nvps) throws IOException, IllegalArgumentException {
 		if (headerKeys.length != headerVals.length)
 			throw new IllegalArgumentException("headerVals has different length than headerKeys!");
 		HttpPost httpPost = new HttpPost(url);
