@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.http.HttpEntity;
@@ -27,7 +28,11 @@ public class ShibbolethClient {
 	}
 
 	public static List<String> readLines(InputStream input) throws IOException {
-		InputStreamReader reader = new InputStreamReader(input);
+		return readLines(input, StandardCharsets.UTF_8.name());
+	}
+
+	public static List<String> readLines(InputStream input, String encoding) throws IOException {
+		InputStreamReader reader = new InputStreamReader(input, encoding);
 		BufferedReader readers = new BufferedReader(reader);
 		List<String> list = new ArrayList<String>();
 		String line = readers.readLine();
