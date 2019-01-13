@@ -65,9 +65,10 @@ try {
 } catch (IOException | IllegalAccessException e) {
     //Print errors
     e.printStackTrace();
+} finally {
+    //Shutdown the Client after you are done.
+    client.shutdown();
 }
-//Shutdown the Client after you are done.
-client.shutdown();
 ```
 
 # How it works
