@@ -6,11 +6,11 @@
 </p>
 This is a simple library for Java handling the Shibboleth Login Authentication for the University of Passau.
 
-# Sample Project
+## Sample Project
 There is a [Repository available](https://github.com/ThexXTURBOXx/studip-app-uni-passau), including source code.<br>
 And of course its [release APK](http://femtopedia.de/studip/index.php).
 
-# Including as dependency (Gradle)
+## Including as dependency (Gradle)
 Add the following snippet to your **build.gradle**:
 ```Gradle
 repositories {
@@ -23,7 +23,7 @@ dependencies {
 }
 ```
 
-# Including as dependency (Maven)
+## Including as dependency (Maven)
 Add the following snippet to your **pom.xml**:
 ```xml
 <repositories>
@@ -41,7 +41,7 @@ Add the following snippet to your **pom.xml**:
 </dependencies>
 ```
 
-# Basic Usage
+## Basic Usage
 ```Java
 //Instantiate the Client
 ShibbolethClient client = new ShibbolethClient();
@@ -71,6 +71,6 @@ try {
 }
 ```
 
-# How it works
+## How it works
 I tested the server for literally hours to work out, how the authentication works (just using backwards engineering, Firefox's Network Debugging feature and Postman).<br>
 The library uses the Google HTTP Client Wrapper for the Apache HTTP Client Library, so it's compatible with Android and - hopefully for the most part - every platform.
