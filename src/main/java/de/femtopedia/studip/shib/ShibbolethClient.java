@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
@@ -66,77 +67,89 @@ public class ShibbolethClient {
 		return list;
 	}
 
-	public void authenticateIfNeeded(String username, String password) throws IOException, IllegalArgumentException, IllegalAccessException, IllegalStateException {
+	public void authenticate(String username, String password) throws IOException, IllegalArgumentException, IllegalAccessException, IllegalStateException {
 		if (!this.isSessionValid())
-			this.authenticate(username, password);
+			this.authenticateIntern(username, password);
 	}
 
 	public boolean isSessionValid() throws IOException {
-		ShibHttpResponse response = get("https://studip.uni-passau.de/studip/api.php");
+		ShibHttpResponse response = null;
 		try {
-			return response.getResponse().getStatusLine().getStatusCode() != 401;
+			response = get("https://studip.uni-passau.de/studip/api.php");
+			return true;
+		} catch (IllegalAccessException e) {
+			return false;
 		} finally {
-			response.close();
+			if (response != null)
+				response.close();
 		}
 	}
 
-	private void authenticate(String username, String password) throws IOException, IllegalArgumentException, IllegalAccessException, IllegalStateException {
-		ShibHttpResponse response1 = get("https://studip.uni-passau.de/studip/index.php");
-		getCookieStore().addCookie(createCookie("cache_session", Long.toString(System.currentTimeMillis()), "studip.uni-passau.de", "/"));
-		getCookieStore().addCookie(createCookie("navigation-length", "3", "studip.uni-passau.de", "/studip/"));
-		response1.close();
+	private void authenticateIntern(String username, String password) throws IOException, IllegalArgumentException, IllegalStateException {
+		ShibHttpResponse response = null;
+		try {
+			response = get("https://studip.uni-passau.de/studip/index.php");
+			getCookieStore().addCookie(createCookie("cache_session", Long.toString(System.currentTimeMillis()), "studip.uni-passau.de", "/"));
+			getCookieStore().addCookie(createCookie("navigation-length", "3", "studip.uni-passau.de", "/studip/"));
+			response.close();
 
-		ShibHttpResponse response2 = get("https://studip.uni-passau.de/studip/index.php?again=yes&sso=shib");
-		response2.close();
+			response = get("https://studip.uni-passau.de/studip/index.php?again=yes&sso=shib");
+			response.close();
 
-		ShibHttpResponse response3 = get("https://studip.uni-passau.de/secure/studip-sp.php?target=https%3A%2F%2Fstudip.uni-passau.de%2Fstudip%2Findex.php%3Fagain%3Dyes%26sso%3Dshib");
-		String ssoSAML = response3.getResponse().getFirstHeader("location").getValue();
-		response3.close();
+			response = get("https://studip.uni-passau.de/secure/studip-sp.php?target=https%3A%2F%2Fstudip.uni-passau.de%2Fstudip%2Findex.php%3Fagain%3Dyes%26sso%3Dshib");
+			String ssoSAML = response.getResponse().getFirstHeader("location").getValue();
+			response.close();
 
-		ShibHttpResponse response4 = get(ssoSAML);
-		String loc = response4.getResponse().getFirstHeader("location").getValue();
-		response4.close();
+			response = get(ssoSAML);
+			String loc = response.getResponse().getFirstHeader("location").getValue();
+			response.close();
 
-		ShibHttpResponse response5 = get("https://sso.uni-passau.de" + loc);
-		response5.close();
+			response = get("https://sso.uni-passau.de" + loc);
+			response.close();
 
-		List<NameValuePair> formList = new ArrayList<>();
-		formList.add(new BasicNameValuePair("_eventId_proceed", ""));
-		formList.add(new BasicNameValuePair("donotcache", ""));
-		formList.add(new BasicNameValuePair("donotcache_dummy", "1"));
-		formList.add(new BasicNameValuePair("j_password", password));
-		formList.add(new BasicNameValuePair("j_username", username));
-		ShibHttpResponse response6 = post("https://sso.uni-passau.de" + loc,
-				new String[]{"Referer", "Upgrade-Insecure-Requests"}, new String[]{"https://sso.uni-passau.de" + loc, "1"},
-				formList);
-		HttpEntity entity6 = response6.getResponse().getEntity();
-		List<String> lines = readLines(entity6.getContent());
-		if (lines.size() == 0 || (lines.get(0).equals("") && lines.size() == 1))
-			throw new IllegalAccessException("Wrong credentials!");
-		String relaystate = null, samlresponse = null;
-		for (String line : lines) {
-			if (line.contains("name=\"RelayState\""))
-				relaystate = line.split("name=\"RelayState\" value=\"")[1].split("\"/>")[0];
-			if (line.contains("name=\"SAMLResponse\""))
-				samlresponse = line.split("name=\"SAMLResponse\" value=\"")[1].split("\"/>")[0];
+			List<NameValuePair> formList = new ArrayList<>();
+			formList.add(new BasicNameValuePair("_eventId_proceed", ""));
+			formList.add(new BasicNameValuePair("donotcache", ""));
+			formList.add(new BasicNameValuePair("donotcache_dummy", "1"));
+			formList.add(new BasicNameValuePair("j_password", password));
+			formList.add(new BasicNameValuePair("j_username", username));
+			response = post("https://sso.uni-passau.de" + loc,
+					new String[]{"Referer", "Upgrade-Insecure-Requests"}, new String[]{"https://sso.uni-passau.de" + loc, "1"},
+					formList);
+			HttpEntity entity6 = response.getResponse().getEntity();
+			List<String> lines = readLines(entity6.getContent());
+			if (lines.size() == 0 || (lines.get(0).equals("") && lines.size() == 1))
+				throw new IllegalAccessException("Wrong credentials!");
+			String relaystate = null, samlresponse = null;
+			for (String line : lines) {
+				if (line.contains("name=\"RelayState\""))
+					relaystate = line.split("name=\"RelayState\" value=\"")[1].split("\"/>")[0];
+				if (line.contains("name=\"SAMLResponse\""))
+					samlresponse = line.split("name=\"SAMLResponse\" value=\"")[1].split("\"/>")[0];
+			}
+			if (relaystate == null || samlresponse == null)
+				throw new IllegalStateException("RelayState is " + relaystate + " and SAMLResponse is " + samlresponse);
+			response.close();
+
+			List<NameValuePair> formList1 = new ArrayList<>();
+			formList1.add(new BasicNameValuePair("RelayState", relaystate));
+			formList1.add(new BasicNameValuePair("SAMLResponse", samlresponse));
+			response = post("https://studip.uni-passau.de/Shibboleth.sso/SAML2/POST",
+					new String[]{"Referer"}, new String[]{"https://sso.uni-passau.de" + loc}, formList1);
+			response.close();
+
+			response = get("https://studip.uni-passau.de/secure/studip-sp.php?target=https%3A%2F%2Fstudip.uni-passau.de%2Fstudip%2Findex.php%3Fagain%3Dyes%26sso%3Dshib");
+			String semurl = response.getResponse().getFirstHeader("location").getValue();
+			response.close();
+
+			response = get(semurl);
+			response.close();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} finally {
+			if (response != null)
+				response.close();
 		}
-		if (relaystate == null || samlresponse == null)
-			throw new IllegalStateException("RelayState is " + relaystate + " and SAMLResponse is " + samlresponse);
-		response6.close();
-
-		List<NameValuePair> formList1 = new ArrayList<>();
-		formList1.add(new BasicNameValuePair("RelayState", relaystate));
-		formList1.add(new BasicNameValuePair("SAMLResponse", samlresponse));
-		ShibHttpResponse response7 = post("https://studip.uni-passau.de/Shibboleth.sso/SAML2/POST",
-				new String[]{"Referer"}, new String[]{"https://sso.uni-passau.de" + loc}, formList1);
-		response7.close();
-
-		ShibHttpResponse response8 = get("https://studip.uni-passau.de/secure/studip-sp.php?target=https%3A%2F%2Fstudip.uni-passau.de%2Fstudip%2Findex.php%3Fagain%3Dyes%26sso%3Dshib");
-		String semurl = response8.getResponse().getFirstHeader("location").getValue();
-		response8.close();
-
-		ShibHttpResponse response9 = get(semurl);
-		response9.close();
 	}
 
 	public CookieStore getCookieStore() {
@@ -150,35 +163,31 @@ public class ShibbolethClient {
 		return c;
 	}
 
-	public ShibHttpResponse getIfValid(String url) throws IOException, IllegalAccessException {
-		if (!isSessionValid()) {
-			throw new IllegalAccessException("Session is not valid!");
-		}
-		return get(url);
-	}
-
-	private ShibHttpResponse get(String url) throws IOException, IllegalArgumentException {
+	public ShibHttpResponse get(String url) throws IOException, IllegalArgumentException, IllegalAccessException {
 		return get(url, new String[0], new String[0]);
 	}
 
-	private ShibHttpResponse get(String url, String[] headerKeys, String[] headerVals) throws IOException, IllegalArgumentException {
+	public ShibHttpResponse get(String url, String[] headerKeys, String[] headerVals) throws IOException, IllegalArgumentException, IllegalAccessException {
 		if (headerKeys.length != headerVals.length)
 			throw new IllegalArgumentException("headerVals has different length than headerKeys!");
 		HttpGet httpGet = new HttpGet(url);
 		for (int i = 0; i < headerKeys.length; i++)
 			httpGet.addHeader(headerKeys[i], headerVals[i]);
-		return new ShibHttpResponse(client.getHttpClient().execute(httpGet), httpGet);
+		HttpResponse response = client.getHttpClient().execute(httpGet);
+		if (response.getStatusLine().getStatusCode() == 401)
+			throw new IllegalAccessException("Session is not valid!");
+		return new ShibHttpResponse(response, httpGet);
 	}
 
-	public ShibHttpResponse post(String url) throws IOException, IllegalArgumentException {
+	public ShibHttpResponse post(String url) throws IOException, IllegalArgumentException, IllegalAccessException {
 		return post(url, new String[0], new String[0]);
 	}
 
-	private ShibHttpResponse post(String url, String[] headerKeys, String[] headerVals) throws IOException, IllegalArgumentException {
+	public ShibHttpResponse post(String url, String[] headerKeys, String[] headerVals) throws IOException, IllegalArgumentException, IllegalAccessException {
 		return post(url, headerKeys, headerVals, null);
 	}
 
-	private ShibHttpResponse post(String url, String[] headerKeys, String[] headerVals, List<NameValuePair> nvps) throws IOException, IllegalArgumentException {
+	public ShibHttpResponse post(String url, String[] headerKeys, String[] headerVals, List<NameValuePair> nvps) throws IOException, IllegalArgumentException, IllegalAccessException {
 		if (headerKeys.length != headerVals.length)
 			throw new IllegalArgumentException("headerVals has different length than headerKeys!");
 		HttpPost httpPost = new HttpPost(url);
@@ -188,7 +197,10 @@ public class ShibbolethClient {
 			httpPost.setEntity(new UrlEncodedFormEntity(nvps));
 			httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded");
 		}
-		return new ShibHttpResponse(client.getHttpClient().execute(httpPost), httpPost);
+		HttpResponse response = client.getHttpClient().execute(httpPost);
+		if (response.getStatusLine().getStatusCode() == 401)
+			throw new IllegalAccessException("Session is not valid!");
+		return new ShibHttpResponse(response, httpPost);
 	}
 
 	public void shutdown() {

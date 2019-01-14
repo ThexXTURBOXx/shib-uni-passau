@@ -47,9 +47,9 @@ Add the following snippet to your **pom.xml**:
 ShibbolethClient client = new ShibbolethClient();
 try {
     //Authenticate using your Login Credentials
-    client.authenticateIfNeeded("USERNAME", "PASSWORD");
+    client.authenticate("USERNAME", "PASSWORD");
     //Get an example response from StudIP'S API
-    ShibHttpResponse response = client.getIfValid("https://studip.uni-passau.de/studip/api.php/user");
+    ShibHttpResponse response = client.get("https://studip.uni-passau.de/studip/api.php/user");
     //Get the site's content
     InputStream stream = response.getResponse().getEntity().getContent();
     try {
