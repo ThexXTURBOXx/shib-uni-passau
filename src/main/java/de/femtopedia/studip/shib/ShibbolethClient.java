@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -21,14 +22,28 @@ import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.HttpConnectionParams;
 
+/**
+ * A simple wrapper for the communication with Uni Passau's Shibboleth SSO.
+ */
 public class ShibbolethClient {
 
+	/**
+	 * The instance of the Apache HTTP Client to use.
+	 */
 	public ApacheHttpTransport client;
 
+	/**
+	 * Initializes a default {@link ShibbolethClient} instance.
+	 */
 	public ShibbolethClient() {
 		this.client = constructHttpClient();
 	}
 
+	/**
+	 * Helper method for constructing an Apache HTTP Client.
+	 *
+	 * @return A default Apache HTTP Client
+	 */
 	private static ApacheHttpTransport constructHttpClient() {
 		ApacheHttpTransport.Builder builder = new ApacheHttpTransport.Builder();
 		HttpConnectionParams.setConnectionTimeout(builder.getHttpParams(), 30000);
@@ -51,10 +66,25 @@ public class ShibbolethClient {
 		return transport;
 	}
 
+	/**
+	 * Helper method for reading lines as {@link String}s from an {@link InputStream} using UTF-8.
+	 *
+	 * @param input The InputStream to read
+	 * @return The read lines
+	 * @throws IOException if the reading process fails
+	 */
 	public static List<String> readLines(InputStream input) throws IOException {
 		return readLines(input, StandardCharsets.UTF_8.name());
 	}
 
+	/**
+	 * Helper method for reading lines as {@link String}s from an {@link InputStream}.
+	 *
+	 * @param input    The InputStream to read
+	 * @param encoding The encoding to use when reading
+	 * @return The read lines
+	 * @throws IOException if the reading process fails
+	 */
 	public static List<String> readLines(InputStream input, String encoding) throws IOException {
 		InputStreamReader reader = new InputStreamReader(input, encoding);
 		BufferedReader readers = new BufferedReader(reader);
@@ -67,11 +97,27 @@ public class ShibbolethClient {
 		return list;
 	}
 
+	/**
+	 * Tries to authenticate with the Shibboleth SSO, if there isn't already an account signed in, and save the required cookies.
+	 *
+	 * @param username The username of the account
+	 * @param password The password of the account
+	 * @throws IOException              if reading errors occur
+	 * @throws IllegalArgumentException if the header values are broken
+	 * @throws IllegalAccessException   if the user credentials are not correct
+	 * @throws IllegalStateException    if cookies don't match the server
+	 */
 	public void authenticate(String username, String password) throws IOException, IllegalArgumentException, IllegalAccessException, IllegalStateException {
 		if (!this.isSessionValid())
 			this.authenticateIntern(username, password);
 	}
 
+	/**
+	 * Returns, whether the current session is valid or you need to re-login using {@link ShibbolethClient#authenticate(String, String)}.
+	 *
+	 * @return true if and only if the current session cookies are valid
+	 * @throws IOException if reading errors occur
+	 */
 	public boolean isSessionValid() throws IOException {
 		ShibHttpResponse response = null;
 		try {
@@ -85,7 +131,18 @@ public class ShibbolethClient {
 		}
 	}
 
-	private void authenticateIntern(String username, String password) throws IOException, IllegalArgumentException, IllegalStateException {
+	/**
+	 * Tries to authenticate with the Shibboleth SSO and save the required cookies.
+	 * UNSAFE! DON'T USE!
+	 *
+	 * @param username The username of the account
+	 * @param password The password of the account
+	 * @throws IOException              if reading errors occur
+	 * @throws IllegalArgumentException if the header values are broken
+	 * @throws IllegalAccessException   if the user credentials are not correct
+	 * @throws IllegalStateException    if cookies don't match the server
+	 */
+	private void authenticateIntern(String username, String password) throws IOException, IllegalArgumentException, IllegalAccessException, IllegalStateException {
 		ShibHttpResponse response = null;
 		try {
 			response = get("https://studip.uni-passau.de/studip/index.php");
@@ -144,18 +201,30 @@ public class ShibbolethClient {
 
 			response = get(semurl);
 			response.close();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
 		} finally {
 			if (response != null)
 				response.close();
 		}
 	}
 
+	/**
+	 * Returns the client's {@link CookieStore}, if you want to manually add Cookies to the Client.
+	 *
+	 * @return the client's {@link CookieStore}
+	 */
 	public CookieStore getCookieStore() {
 		return ((AbstractHttpClient) this.client.getHttpClient()).getCookieStore();
 	}
 
+	/**
+	 * Helper method for one-line creation of {@link BasicClientCookie}s.
+	 *
+	 * @param key    The cookie's key
+	 * @param value  The cookie's value
+	 * @param domain The cookie's validation domain
+	 * @param path   The cookie's path
+	 * @return the created {@link BasicClientCookie}
+	 */
 	public BasicClientCookie createCookie(String key, String value, String domain, String path) {
 		BasicClientCookie c = new BasicClientCookie(key, value);
 		c.setDomain(domain);
@@ -163,10 +232,30 @@ public class ShibbolethClient {
 		return c;
 	}
 
+	/**
+	 * Performs a HTTP GET Request.
+	 *
+	 * @param url The URL to get
+	 * @return A {@link ShibHttpResponse} representing the result
+	 * @throws IOException              if reading errors occur
+	 * @throws IllegalArgumentException if the header values are broken
+	 * @throws IllegalAccessException   if the session isn't valid
+	 */
 	public ShibHttpResponse get(String url) throws IOException, IllegalArgumentException, IllegalAccessException {
 		return get(url, new String[0], new String[0]);
 	}
 
+	/**
+	 * Performs a HTTP GET Request.
+	 *
+	 * @param url        The URL to get
+	 * @param headerKeys An array containing keys for the headers to send with the request
+	 * @param headerVals An array containing values for the headers to send with the request (size must be the same as headerKeys.length)
+	 * @return A {@link ShibHttpResponse} representing the result
+	 * @throws IOException              if reading errors occur
+	 * @throws IllegalArgumentException if the header values are broken
+	 * @throws IllegalAccessException   if the session isn't valid
+	 */
 	public ShibHttpResponse get(String url, String[] headerKeys, String[] headerVals) throws IOException, IllegalArgumentException, IllegalAccessException {
 		if (headerKeys.length != headerVals.length)
 			throw new IllegalArgumentException("headerVals has different length than headerKeys!");
@@ -179,15 +268,47 @@ public class ShibbolethClient {
 		return new ShibHttpResponse(response, httpGet);
 	}
 
+	/**
+	 * Performs a HTTP POST Request.
+	 *
+	 * @param url The URL to post
+	 * @return A {@link ShibHttpResponse} representing the result
+	 * @throws IOException              if reading errors occur
+	 * @throws IllegalArgumentException if the header values are broken
+	 * @throws IllegalAccessException   if the session isn't valid
+	 */
 	public ShibHttpResponse post(String url) throws IOException, IllegalArgumentException, IllegalAccessException {
 		return post(url, new String[0], new String[0]);
 	}
 
+	/**
+	 * Performs a HTTP POST Request.
+	 *
+	 * @param url        The URL to post
+	 * @param headerKeys An array containing keys for the headers to send with the request
+	 * @param headerVals An array containing values for the headers to send with the request (size must be the same as headerKeys.length)
+	 * @return A {@link ShibHttpResponse} representing the result
+	 * @throws IOException              if reading errors occur
+	 * @throws IllegalArgumentException if the header values are broken
+	 * @throws IllegalAccessException   if the session isn't valid
+	 */
 	public ShibHttpResponse post(String url, String[] headerKeys, String[] headerVals) throws IOException, IllegalArgumentException, IllegalAccessException {
 		return post(url, headerKeys, headerVals, null);
 	}
 
-	public ShibHttpResponse post(String url, String[] headerKeys, String[] headerVals, List<NameValuePair> nvps) throws IOException, IllegalArgumentException, IllegalAccessException {
+	/**
+	 * Performs a HTTP POST Request.
+	 *
+	 * @param url        The URL to post
+	 * @param headerKeys An array containing keys for the headers to send with the request
+	 * @param headerVals An array containing values for the headers to send with the request (size must be the same as headerKeys.length)
+	 * @param nvps       An optional list containing {@link NameValuePair}s.
+	 * @return A {@link ShibHttpResponse} representing the result
+	 * @throws IOException              if reading errors occur
+	 * @throws IllegalArgumentException if the header values are broken
+	 * @throws IllegalAccessException   if the session isn't valid
+	 */
+	public ShibHttpResponse post(String url, String[] headerKeys, String[] headerVals, @Nullable List<NameValuePair> nvps) throws IOException, IllegalArgumentException, IllegalAccessException {
 		if (headerKeys.length != headerVals.length)
 			throw new IllegalArgumentException("headerVals has different length than headerKeys!");
 		HttpPost httpPost = new HttpPost(url);
@@ -203,6 +324,9 @@ public class ShibbolethClient {
 		return new ShibHttpResponse(response, httpPost);
 	}
 
+	/**
+	 * Shuts the client down.
+	 */
 	public void shutdown() {
 		this.client.shutdown();
 	}
