@@ -12,7 +12,7 @@
 
     <groupId>de.femtopedia.studip</groupId>
     <artifactId>shib-uni-passau</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
 
     <dependencies>
         <dependency>
