@@ -21,7 +21,7 @@ repositories {
     }
 }
 dependencies {
-    implementation 'de.femtopedia.studip:shib-uni-passau:1.2'
+    implementation 'de.femtopedia.studip:shib-uni-passau:1.3'
 }
 ```
 
@@ -38,7 +38,7 @@ Add the following snippet to your **pom.xml**:
     <dependency>
         <groupId>de.femtopedia.studip</groupId>
         <artifactId>shib-uni-passau</artifactId>
-        <version>1.2</version>
+        <version>1.3</version>
     </dependency>
 </dependencies>
 ```

@@ -1,8 +1,9 @@
 package de.femtopedia.studip.shib;
 
 import java.io.IOException;
+import java.io.InputStream;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.util.EntityUtils;
 
@@ -14,7 +15,7 @@ public class ShibHttpResponse {
 	/**
 	 * The response from the server.
 	 */
-	private CloseableHttpResponse response;
+	private HttpResponse response;
 
 	/**
 	 * The initial HTTP request.
@@ -28,8 +29,25 @@ public class ShibHttpResponse {
 	 * @param request  The initial HTTP request
 	 */
 	ShibHttpResponse(HttpResponse response, HttpRequestBase request) {
-		this.response = (CloseableHttpResponse) response;
+		this.response = response;
 		this.request = request;
+	}
+
+	/**
+	 * Helper method for consuming a {@link HttpEntity}.
+	 *
+	 * @param entity The {@link HttpEntity} to consume
+	 * @throws IOException if miscellaneous error occur
+	 */
+	private static void consumeEntity(HttpEntity entity) throws IOException {
+		if (entity != null) {
+			if (entity.isStreaming()) {
+				InputStream instream = entity.getContent();
+				if (instream != null) {
+					instream.close();
+				}
+			}
+		}
 	}
 
 	/**
@@ -37,7 +55,7 @@ public class ShibHttpResponse {
 	 *
 	 * @return the response from the server
 	 */
-	public CloseableHttpResponse getResponse() {
+	public HttpResponse getResponse() {
 		return response;
 	}
 
@@ -46,16 +64,28 @@ public class ShibHttpResponse {
 	 */
 	public void close() {
 		try {
+			EntityUtils.class.getMethod("consume", HttpEntity.class);
 			EntityUtils.consume(response.getEntity());
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			try {
+				EntityUtils.class.getMethod("consumeQuietly", HttpEntity.class);
+				EntityUtils.consumeQuietly(response.getEntity());
+			} catch (NoSuchMethodException e1) {
+				try {
+					response.getEntity().consumeContent();
+					consumeEntity(response.getEntity());
+				} catch (IOException e2) {
+					e.printStackTrace();
+				}
+			}
 		}
-		request.releaseConnection();
-		request.abort();
 		try {
-			response.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+			HttpRequestBase.class.getMethod("abort");
+			request.abort();
+		} catch (NoSuchMethodException e) {
+			System.out.println("Can't abort connection.");
 		}
 	}
 

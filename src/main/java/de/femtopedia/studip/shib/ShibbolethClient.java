@@ -1,14 +1,22 @@
 package de.femtopedia.studip.shib;
 
 import com.google.api.client.http.apache.ApacheHttpTransport;
+import com.google.api.client.util.SecurityUtils;
+import com.google.api.client.util.SslUtils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -17,6 +25,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.message.BasicNameValuePair;
@@ -36,18 +45,32 @@ public class ShibbolethClient {
 	 * Initializes a default {@link ShibbolethClient} instance.
 	 */
 	public ShibbolethClient() {
-		this.client = constructHttpClient();
+		this(null, "");
+	}
+
+	/**
+	 * Initializes a default {@link ShibbolethClient} instance.
+	 *
+	 * @param keyStore A custom KeyStore as {@link InputStream} to set or null
+	 * @param password The KeyStore's password
+	 */
+	public ShibbolethClient(InputStream keyStore, String password) {
+		this.client = constructHttpClient(keyStore, password);
 	}
 
 	/**
 	 * Helper method for constructing an Apache HTTP Client.
 	 *
+	 * @param keyStore A custom KeyStore as {@link InputStream} to set or null
+	 * @param password The KeyStore's password
 	 * @return A default Apache HTTP Client
 	 */
-	private static ApacheHttpTransport constructHttpClient() {
+	private static ApacheHttpTransport constructHttpClient(InputStream keyStore, String password) {
 		ApacheHttpTransport.Builder builder = new ApacheHttpTransport.Builder();
 		HttpConnectionParams.setConnectionTimeout(builder.getHttpParams(), 30000);
 		HttpConnectionParams.setSoTimeout(builder.getHttpParams(), 30000);
+		if (keyStore != null)
+			trySetKeyStore(builder, keyStore, password);
 		ApacheHttpTransport transport = builder.build();
 		HttpClient client = transport.getHttpClient();
 		if (client instanceof AbstractHttpClient) {
@@ -67,6 +90,35 @@ public class ShibbolethClient {
 	}
 
 	/**
+	 * Tries to set a custom KeyStore via reflection.
+	 *
+	 * @param builder  The {@link ApacheHttpTransport.Builder} to use
+	 * @param keyStore The KeyStore as {@link InputStream} to set
+	 * @param password The KeyStore's password
+	 */
+	private static void trySetKeyStore(ApacheHttpTransport.Builder builder, InputStream keyStore, String password) {
+		try {
+			System.setProperty("ssl.TrustManagerFactory.algorithm", "SunPKIX");
+			KeyStore trustStore = KeyStore.getInstance("BKS");
+			SecurityUtils.loadKeyStore(trustStore, keyStore, password);
+			SSLContext sslContext = SslUtils.getTlsSslContext();
+			SslUtils.initSslContext(sslContext, trustStore, SslUtils.getDefaultTrustManagerFactory());
+			Class c = Class.forName("com.google.api.client.http.apache.SSLSocketFactoryExtension");
+			Constructor co = c.getDeclaredConstructor(SSLContext.class);
+			co.setAccessible(true);
+			Method m = builder.getClass().getMethod("setSocketFactory", SSLSocketFactory.class);
+			m.setAccessible(true);
+			m.invoke(builder, co.newInstance(sslContext));
+			HttpsURLConnection.setDefaultHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+			SSLSocketFactory.getSocketFactory().setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+			builder.getSSLSocketFactory().setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+		} catch (IOException | GeneralSecurityException | InstantiationException | ClassNotFoundException |
+				NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
 	 * Helper method for reading lines as {@link String}s from an {@link InputStream} using UTF-8.
 	 *
 	 * @param input The InputStream to read
@@ -74,7 +126,7 @@ public class ShibbolethClient {
 	 * @throws IOException if the reading process fails
 	 */
 	public static List<String> readLines(InputStream input) throws IOException {
-		return readLines(input, StandardCharsets.UTF_8.name());
+		return readLines(input, "UTF-8");
 	}
 
 	/**
