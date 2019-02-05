@@ -3,7 +3,7 @@
   <a href="https://lgtm.com/projects/g/ThexXTURBOXx/shib-uni-passau/alerts/"><img alt="Total alerts" src="https://img.shields.io/lgtm/alerts/g/ThexXTURBOXx/shib-uni-passau.svg?logo=lgtm&logoWidth=18"/></a>
   <a href="https://lgtm.com/projects/g/ThexXTURBOXx/shib-uni-passau/context:java"><img alt="Language grade: Java" src="https://img.shields.io/lgtm/grade/java/g/ThexXTURBOXx/shib-uni-passau.svg?logo=lgtm&logoWidth=18"/></a>
   <a href="https://travis-ci.com/ThexXTURBOXx/shib-uni-passau"><img src="https://travis-ci.com/ThexXTURBOXx/shib-uni-passau.svg?branch=master"></a>
-  <a href="http://femtopedia.de/studip/index.php"><img src="https://img.shields.io/website-up-down-green-red/http/www.femtopedia.de/index.php.svg?label=Repository"></a>
+  <a href="https://maven-badges.herokuapp.com/maven-central/de.femtopedia.studip/shib-uni-passau"><img src="https://maven-badges.herokuapp.com/maven-central/de.femtopedia.studip/shib-uni-passau/badge.svg"></a>
   <a href="https://github.com/ThexXTURBOXx/shib-uni-passau/releases"><img src="https://img.shields.io/github/release/thexxturboxx/shib-uni-passau.svg"></a>
 </p>
 This is a simple library for Java handling the Shibboleth Login Authentication for the University of Passau.
@@ -13,35 +13,32 @@ There is a [Repository available](https://github.com/ThexXTURBOXx/studip-app-uni
 And of course its [release APK](http://femtopedia.de/studip/index.php).
 
 ## Including as dependency (Gradle)
-Add the following snippet to your **build.gradle**:
+Add the following snippet to your **build.gradle** and change the version number:
 ```Gradle
 repositories {
     maven {
-        url "http://femtopedia.de/maven"
+        jcenter()
     }
 }
 dependencies {
-    implementation 'de.femtopedia.studip:shib-uni-passau:1.3'
+    implementation 'de.femtopedia.studip:shib-uni-passau:...'
 }
 ```
 
 ## Including as dependency (Maven)
-Add the following snippet to your **pom.xml**:
+Add the following snippet to your **pom.xml** and change the version number:
 ```xml
-<repositories>
-    <repository>
-        <id>Femtopedia</id>
-        <url>http://femtopedia.de/maven</url>
-    </repository>
-</repositories>
 <dependencies>
     <dependency>
         <groupId>de.femtopedia.studip</groupId>
         <artifactId>shib-uni-passau</artifactId>
-        <version>1.3</version>
+        <version>...</version>
     </dependency>
 </dependencies>
 ```
+
+## Older builds
+Older builds are available in my Maven repo here: [http://femtopedia.de/maven](http://femtopedia.de/maven)
 
 ## Basic Usage
 ```Java
