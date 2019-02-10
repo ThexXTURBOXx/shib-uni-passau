@@ -2,6 +2,7 @@ package de.femtopedia.studip.shib;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -47,6 +48,55 @@ public class ShibHttpResponse {
 					instream.close();
 				}
 			}
+		}
+	}
+
+	/**
+	 * Returns the content of the HttpEntity.
+	 *
+	 * @return A String, containing the content of the website
+	 * @throws IOException when reading errors occur
+	 */
+	public String readLine() throws IOException {
+		return readLine(ShibbolethClient.DEFAULT_ENCODING);
+	}
+
+	/**
+	 * Returns the content of the HttpEntity.
+	 *
+	 * @param encoding The encoding to use when reading
+	 * @return A String, containing the content of the website
+	 * @throws IOException when reading errors occur
+	 */
+	public String readLine(String encoding) throws IOException {
+		return ShibbolethClient.listToString(readLines(encoding));
+	}
+
+	/**
+	 * Returns the content of the HttpEntity.
+	 *
+	 * @return A List of Strings, containing the content of the website
+	 * @throws IOException when reading errors occur
+	 */
+	public List<String> readLines() throws IOException {
+		return readLines(ShibbolethClient.DEFAULT_ENCODING);
+	}
+
+	/**
+	 * Returns the content of the HttpEntity.
+	 *
+	 * @param encoding The encoding to use when reading
+	 * @return A List of Strings, containing the content of the website
+	 * @throws IOException when reading errors occur
+	 */
+	public List<String> readLines(String encoding) throws IOException {
+		InputStream read = null;
+		try {
+			read = getResponse().getEntity().getContent();
+			return ShibbolethClient.readLines(read, encoding);
+		} finally {
+			if (read != null)
+				read.close();
 		}
 	}
 
