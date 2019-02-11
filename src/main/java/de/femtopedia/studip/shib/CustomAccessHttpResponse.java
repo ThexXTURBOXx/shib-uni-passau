@@ -11,7 +11,7 @@ import org.apache.http.util.EntityUtils;
 /**
  * A class for easing handling of HTTP Responses.
  */
-public class ShibHttpResponse {
+public class CustomAccessHttpResponse {
 
 	/**
 	 * The response from the server.
@@ -24,12 +24,12 @@ public class ShibHttpResponse {
 	private HttpRequestBase request;
 
 	/**
-	 * Initializes a new {@link ShibHttpResponse} instance.
+	 * Initializes a new {@link CustomAccessHttpResponse} instance.
 	 *
 	 * @param response The response from the server
 	 * @param request  The initial HTTP request
 	 */
-	ShibHttpResponse(HttpResponse response, HttpRequestBase request) {
+	CustomAccessHttpResponse(HttpResponse response, HttpRequestBase request) {
 		this.response = response;
 		this.request = request;
 	}
