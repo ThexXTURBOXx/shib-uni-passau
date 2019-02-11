@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
@@ -11,7 +10,7 @@
 
     <groupId>de.femtopedia.studip</groupId>
     <artifactId>shib-uni-passau</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.4</version>
     <name>Shibboleth-Uni-Passau</name>
     <description>Allows authentication with Uni Passau's Shibboleth SSO</description>
     <url>https://github.com/ThexXTURBOXx/shib-uni-passau</url>
@@ -76,7 +75,7 @@
         <connection>scm:git:git://github.com/ThexXTURBOXx/shib-uni-passau.git</connection>
         <developerConnection>scm:git:git@github.com:ThexXTURBOXx/shib-uni-passau.git</developerConnection>
         <url>https://github.com/ThexXTURBOXx/shib-uni-passau</url>
-        <tag>HEAD</tag>
+        <tag>1.4</tag>
     </scm>
 
     <build>
