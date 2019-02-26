@@ -235,6 +235,11 @@ public class ShibbolethClient extends CustomAccessClient {
 		return executeRequest(httpDelete, headerKeys, headerVals);
 	}
 
+	@Override
+	public boolean isErrorCode(int statusCode) {
+		return statusCode == 401;
+	}
+
 	/**
 	 * Shuts the client down.
 	 */

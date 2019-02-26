@@ -199,6 +199,11 @@ public class OAuthClient extends CustomAccessClient {
 		return request;
 	}
 
+	@Override
+	public boolean isErrorCode(int statusCode) {
+		return statusCode == 401 || statusCode == 500;
+	}
+
 	/**
 	 * Shuts the client down.
 	 */

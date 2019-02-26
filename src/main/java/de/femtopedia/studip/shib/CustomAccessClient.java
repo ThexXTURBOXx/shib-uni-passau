@@ -156,7 +156,7 @@ public abstract class CustomAccessClient {
 	/**
 	 * Returns, whether the current session is valid or you need to re-login.
 	 *
-	 * @return true if and only if the current session cookies are valid
+	 * @return true if and only if the current session is valid
 	 * @throws IOException    if reading errors occur
 	 * @throws OAuthException if any OAuth errors occur
 	 */
@@ -326,6 +326,15 @@ public abstract class CustomAccessClient {
 			throws IOException, IllegalArgumentException, IllegalAccessException, OAuthException;
 
 	/**
+	 * Returns, whether the given Status Code should be treated
+	 * as a failed request.
+	 *
+	 * @param statusCode The Status Code to check
+	 * @return true, if the status Code is an Auth-Error-Code
+	 */
+	public abstract boolean isErrorCode(int statusCode);
+
+	/**
 	 * Executes the given HTTP request.
 	 *
 	 * @param request    The request to execute
@@ -343,7 +352,7 @@ public abstract class CustomAccessClient {
 		for (int i = 0; i < headerKeys.length; i++)
 			request.addHeader(headerKeys[i], headerVals[i]);
 		HttpResponse response = client.getHttpClient().execute(request);
-		if (response.getStatusLine().getStatusCode() == 401)
+		if (this.isErrorCode(response.getStatusLine().getStatusCode()))
 			throw new IllegalAccessException("Session is not valid!");
 		return new CustomAccessHttpResponse(response, request);
 	}
