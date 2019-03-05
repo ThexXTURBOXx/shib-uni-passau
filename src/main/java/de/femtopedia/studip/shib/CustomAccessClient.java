@@ -345,7 +345,7 @@ public abstract class CustomAccessClient {
 	 * @throws IllegalArgumentException if the header values are broken
 	 * @throws IllegalAccessException   if the session isn't valid
 	 */
-	CustomAccessHttpResponse executeRequest(HttpRequestBase request, String[] headerKeys, String[] headerVals)
+	protected CustomAccessHttpResponse executeRequest(HttpRequestBase request, String[] headerKeys, String[] headerVals)
 			throws IOException, IllegalArgumentException, IllegalAccessException {
 		if (headerKeys.length != headerVals.length)
 			throw new IllegalArgumentException("headerVals has different length than headerKeys!");
