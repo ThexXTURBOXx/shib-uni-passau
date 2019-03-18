@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.util.ArrayList;
@@ -27,7 +26,7 @@ import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.params.HttpConnectionParams;
 
 /**
- * Class representing A HttpClient with custom authorization and Sessions.
+ * Class representing a HttpClient with custom authorization and Sessions.
  */
 public abstract class CustomAccessClient {
 
@@ -130,7 +129,7 @@ public abstract class CustomAccessClient {
 	 * @param keyStore The KeyStore as {@link InputStream} to set
 	 * @param password The KeyStore's password
 	 */
-	@SuppressWarnings({"unchecked", "JavaReflectionInvocation"})
+	@SuppressWarnings({"unchecked", "deprecation"})
 	private static void trySetKeyStore(ApacheHttpTransport.Builder builder, InputStream keyStore, String password) {
 		try {
 			System.setProperty("ssl.TrustManagerFactory.algorithm", "SunPKIX");
@@ -141,9 +140,7 @@ public abstract class CustomAccessClient {
 			Class c = Class.forName("com.google.api.client.http.apache.SSLSocketFactoryExtension");
 			Constructor co = c.getDeclaredConstructor(SSLContext.class);
 			co.setAccessible(true);
-			Method m = builder.getClass().getMethod("setSocketFactory", SSLSocketFactory.class);
-			m.setAccessible(true);
-			m.invoke(builder, co.newInstance(sslContext));
+			builder.setSocketFactory((SSLSocketFactory) co.newInstance(sslContext));
 			HttpsURLConnection.setDefaultHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
 			SSLSocketFactory.getSocketFactory().setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
 			builder.getSSLSocketFactory().setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
