@@ -240,11 +240,4 @@ public class ShibbolethClient extends CustomAccessClient {
 		return statusCode == 401;
 	}
 
-	/**
-	 * Shuts the client down.
-	 */
-	public void shutdown() {
-		this.client.shutdown();
-	}
-
 }

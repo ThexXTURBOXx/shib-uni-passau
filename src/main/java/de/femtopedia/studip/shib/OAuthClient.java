@@ -204,11 +204,4 @@ public class OAuthClient extends CustomAccessClient {
 		return statusCode == 401 || statusCode == 500;
 	}
 
-	/**
-	 * Shuts the client down.
-	 */
-	public void shutdown() {
-		this.client.shutdown();
-	}
-
 }

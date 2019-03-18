@@ -354,4 +354,11 @@ public abstract class CustomAccessClient {
 		return new CustomAccessHttpResponse(response, request);
 	}
 
+	/**
+	 * Shuts the client down.
+	 */
+	public void shutdown() {
+		this.client.shutdown();
+	}
+
 }
