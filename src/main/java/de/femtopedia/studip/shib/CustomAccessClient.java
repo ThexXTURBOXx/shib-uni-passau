@@ -1,29 +1,18 @@
 package de.femtopedia.studip.shib;
 
-import com.google.api.client.http.apache.ApacheHttpTransport;
-import com.google.api.client.util.SecurityUtils;
-import com.google.api.client.util.SslUtils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
+import javafx.util.Pair;
 import oauth.signpost.exception.OAuthException;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.impl.client.AbstractHttpClient;
-import org.apache.http.params.HttpConnectionParams;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.riversun.okhttp3.OkHttp3CookieHelper;
 
 /**
  * Class representing a HttpClient with custom authorization and Sessions.
@@ -33,18 +22,20 @@ public abstract class CustomAccessClient {
 	public static final String DEFAULT_ENCODING = "UTF-8";
 
 	/**
-	 * The instance of the Apache HTTP Client to use.
+	 * The instance of the OkHttp-Client to use.
 	 */
-	public ApacheHttpTransport client;
+	public OkHttpClient client;
+
+	/**
+	 * A Helper instance for managing Cookies.
+	 */
+	protected OkHttp3CookieHelper cookieHelper;
 
 	/**
 	 * Initializes a default {@link CustomAccessClient} instance.
-	 *
-	 * @param keyStore A custom KeyStore as {@link InputStream} to set or null
-	 * @param password The KeyStore's password
 	 */
-	public CustomAccessClient(InputStream keyStore, String password) {
-		this.client = constructHttpClient(keyStore, password);
+	public CustomAccessClient() {
+		this.client = constructHttpClient();
 	}
 
 	/**
@@ -92,62 +83,31 @@ public abstract class CustomAccessClient {
 	}
 
 	/**
-	 * Helper method for constructing an Apache HTTP Client.
+	 * Helper method for constructing an OkHttp-Client.
 	 *
-	 * @param keyStore A custom KeyStore as {@link InputStream} to set or null
-	 * @param password The KeyStore's password
-	 * @return A default Apache HTTP Client
+	 * @return A default OkHttp-Client
 	 */
-	private static ApacheHttpTransport constructHttpClient(InputStream keyStore, String password) {
-		ApacheHttpTransport.Builder builder = new ApacheHttpTransport.Builder();
-		HttpConnectionParams.setConnectionTimeout(builder.getHttpParams(), 30000);
-		HttpConnectionParams.setSoTimeout(builder.getHttpParams(), 30000);
-		if (keyStore != null)
-			trySetKeyStore(builder, keyStore, password);
-		ApacheHttpTransport transport = builder.build();
-		HttpClient client = transport.getHttpClient();
-		if (client instanceof AbstractHttpClient) {
-			((AbstractHttpClient) client).setHttpRequestRetryHandler((exception, exCount, ctx) -> {
-				if (exCount > 3) {
-					System.out.println("Maximum tries reached for Client HTTP Pool (3)");
-					return false;
-				}
-				if (exception instanceof org.apache.http.NoHttpResponseException) {
-					System.out.println("No response from server on " + exCount + ". call");
-					return true;
-				}
-				return false;
-			});
-		}
-		return transport;
+	private OkHttpClient constructHttpClient() {
+		this.cookieHelper = new OkHttp3CookieHelper();
+		return new OkHttpClient.Builder()
+				.cookieJar(this.cookieHelper.cookieJar())
+				.followRedirects(false)
+				.followSslRedirects(false)
+				.build();
 	}
 
 	/**
-	 * Tries to set a custom KeyStore via reflection.
+	 * Converts a Pair-List into Form Data.
 	 *
-	 * @param builder  The {@link ApacheHttpTransport.Builder} to use
-	 * @param keyStore The KeyStore as {@link InputStream} to set
-	 * @param password The KeyStore's password
+	 * @param nvps The Pair List to convert
+	 * @return The converted {@link FormBody}.
 	 */
-	@SuppressWarnings({"unchecked", "deprecation"})
-	private static void trySetKeyStore(ApacheHttpTransport.Builder builder, InputStream keyStore, String password) {
-		try {
-			System.setProperty("ssl.TrustManagerFactory.algorithm", "SunPKIX");
-			KeyStore trustStore = KeyStore.getInstance("BKS");
-			SecurityUtils.loadKeyStore(trustStore, keyStore, password);
-			SSLContext sslContext = SslUtils.getTlsSslContext();
-			SslUtils.initSslContext(sslContext, trustStore, SslUtils.getDefaultTrustManagerFactory());
-			Class c = Class.forName("com.google.api.client.http.apache.SSLSocketFactoryExtension");
-			Constructor co = c.getDeclaredConstructor(SSLContext.class);
-			co.setAccessible(true);
-			builder.setSocketFactory((SSLSocketFactory) co.newInstance(sslContext));
-			HttpsURLConnection.setDefaultHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-			SSLSocketFactory.getSocketFactory().setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-			builder.getSSLSocketFactory().setHostnameVerifier(SSLSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
-		} catch (IOException | GeneralSecurityException | InstantiationException | ClassNotFoundException |
-				NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-			e.printStackTrace();
+	protected FormBody getFormBody(List<Pair<String, String>> nvps) {
+		FormBody.Builder formBuilder = new FormBody.Builder();
+		for (Pair<String, String> p : nvps) {
+			formBuilder.add(p.getKey(), p.getValue());
 		}
+		return formBuilder.build();
 	}
 
 	/**
@@ -203,47 +163,15 @@ public abstract class CustomAccessClient {
 	/**
 	 * Performs a HTTP POST Request.
 	 *
-	 * @param url The URL to post
-	 * @return A {@link CustomAccessHttpResponse} representing the result
-	 * @throws IOException              if reading errors occur
-	 * @throws IllegalArgumentException if the header values are broken
-	 * @throws IllegalAccessException   if the session isn't valid
-	 * @throws OAuthException           if any OAuth errors occur
-	 */
-	public CustomAccessHttpResponse post(String url)
-			throws IOException, IllegalArgumentException, IllegalAccessException, OAuthException {
-		return post(url, new String[0], new String[0]);
-	}
-
-	/**
-	 * Performs a HTTP POST Request.
-	 *
-	 * @param url        The URL to post
-	 * @param headerKeys An array containing keys for the headers to send with the request
-	 * @param headerVals An array containing values for the headers to send with the request (size must be the same as headerKeys.length)
-	 * @return A {@link CustomAccessHttpResponse} representing the result
-	 * @throws IOException              if reading errors occur
-	 * @throws IllegalArgumentException if the header values are broken
-	 * @throws IllegalAccessException   if the session isn't valid
-	 * @throws OAuthException           if any OAuth errors occur
-	 */
-	public CustomAccessHttpResponse post(String url, String[] headerKeys, String[] headerVals)
-			throws IOException, IllegalArgumentException, IllegalAccessException, OAuthException {
-		return post(url, headerKeys, headerVals, null);
-	}
-
-	/**
-	 * Performs a HTTP POST Request.
-	 *
 	 * @param url  The URL to post
-	 * @param nvps A list containing {@link NameValuePair}s
+	 * @param nvps A list containing Pairs for Form Data
 	 * @return A {@link CustomAccessHttpResponse} representing the result
 	 * @throws IOException              if reading errors occur
 	 * @throws IllegalArgumentException if the header values are broken
 	 * @throws IllegalAccessException   if the session isn't valid
 	 * @throws OAuthException           if any OAuth errors occur
 	 */
-	public CustomAccessHttpResponse post(String url, List<NameValuePair> nvps)
+	public CustomAccessHttpResponse post(String url, List<Pair<String, String>> nvps)
 			throws IOException, IllegalArgumentException, IllegalAccessException, OAuthException {
 		return post(url, new String[0], new String[0], nvps);
 	}
@@ -254,28 +182,29 @@ public abstract class CustomAccessClient {
 	 * @param url        The URL to post
 	 * @param headerKeys An array containing keys for the headers to send with the request
 	 * @param headerVals An array containing values for the headers to send with the request (size must be the same as headerKeys.length)
-	 * @param nvps       An optional list containing {@link NameValuePair}s
+	 * @param nvps       A list containing Pairs for Form Data
 	 * @return A {@link CustomAccessHttpResponse} representing the result
 	 * @throws IOException              if reading errors occur
 	 * @throws IllegalArgumentException if the header values are broken
 	 * @throws IllegalAccessException   if the session isn't valid
 	 * @throws OAuthException           if any OAuth errors occur
 	 */
-	public abstract CustomAccessHttpResponse post(String url, String[] headerKeys, String[] headerVals, @Nullable List<NameValuePair> nvps)
+	public abstract CustomAccessHttpResponse post(String url, String[] headerKeys, String[] headerVals, List<Pair<String, String>> nvps)
 			throws IOException, IllegalArgumentException, IllegalAccessException, OAuthException;
 
 	/**
 	 * Performs a HTTP PUT Request.
 	 *
-	 * @param url The URL to put
+	 * @param url  The URL to put
+	 * @param nvps A list containing Pairs for Form Data
 	 * @return A {@link CustomAccessHttpResponse} representing the result
 	 * @throws IOException            if reading errors occur
 	 * @throws IllegalAccessException if the session isn't valid
 	 * @throws OAuthException         if any OAuth errors occur
 	 */
-	public CustomAccessHttpResponse put(String url)
+	public CustomAccessHttpResponse put(String url, List<Pair<String, String>> nvps)
 			throws IOException, IllegalAccessException, OAuthException {
-		return put(url, new String[0], new String[0]);
+		return put(url, new String[0], new String[0], nvps);
 	}
 
 	/**
@@ -284,27 +213,29 @@ public abstract class CustomAccessClient {
 	 * @param url        The URL to put
 	 * @param headerKeys An array containing keys for the headers to send with the request
 	 * @param headerVals An array containing values for the headers to send with the request (size must be the same as headerKeys.length)
+	 * @param nvps       A list containing Pairs for Form Data
 	 * @return A {@link CustomAccessHttpResponse} representing the result
 	 * @throws IOException              if reading errors occur
 	 * @throws IllegalArgumentException if the header values are broken
 	 * @throws IllegalAccessException   if the session isn't valid
 	 * @throws OAuthException           if any OAuth errors occur
 	 */
-	public abstract CustomAccessHttpResponse put(String url, String[] headerKeys, String[] headerVals)
+	public abstract CustomAccessHttpResponse put(String url, String[] headerKeys, String[] headerVals, List<Pair<String, String>> nvps)
 			throws IOException, IllegalArgumentException, IllegalAccessException, OAuthException;
 
 	/**
 	 * Performs a HTTP DELETE Request.
 	 *
-	 * @param url The URL to delete
+	 * @param url  The URL to delete
+	 * @param nvps A list containing Pairs for Form Data
 	 * @return A {@link CustomAccessHttpResponse} representing the result
 	 * @throws IOException            if reading errors occur
 	 * @throws IllegalAccessException if the session isn't valid
 	 * @throws OAuthException         if any OAuth errors occur
 	 */
-	public CustomAccessHttpResponse delete(String url)
+	public CustomAccessHttpResponse delete(String url, List<Pair<String, String>> nvps)
 			throws IOException, IllegalAccessException, OAuthException {
-		return delete(url, new String[0], new String[0]);
+		return delete(url, new String[0], new String[0], nvps);
 	}
 
 	/**
@@ -313,13 +244,14 @@ public abstract class CustomAccessClient {
 	 * @param url        The URL to delete
 	 * @param headerKeys An array containing keys for the headers to send with the request
 	 * @param headerVals An array containing values for the headers to send with the request (size must be the same as headerKeys.length)
+	 * @param nvps       A list containing Pairs for Form Data
 	 * @return A {@link CustomAccessHttpResponse} representing the result
 	 * @throws IOException              if reading errors occur
 	 * @throws IllegalArgumentException if the header values are broken
 	 * @throws IllegalAccessException   if the session isn't valid
 	 * @throws OAuthException           if any OAuth errors occur
 	 */
-	public abstract CustomAccessHttpResponse delete(String url, String[] headerKeys, String[] headerVals)
+	public abstract CustomAccessHttpResponse delete(String url, String[] headerKeys, String[] headerVals, List<Pair<String, String>> nvps)
 			throws IOException, IllegalArgumentException, IllegalAccessException, OAuthException;
 
 	/**
@@ -334,31 +266,26 @@ public abstract class CustomAccessClient {
 	/**
 	 * Executes the given HTTP request.
 	 *
-	 * @param request    The request to execute
-	 * @param headerKeys An array containing keys for the headers to send with the request
-	 * @param headerVals An array containing values for the headers to send with the request (size must be the same as headerKeys.length)
+	 * @param requestBuilder The request to build and execute
+	 * @param headerKeys     An array containing keys for the headers to send with the request
+	 * @param headerVals     An array containing values for the headers to send with the request (size must be the same as headerKeys.length)
 	 * @return A {@link CustomAccessHttpResponse} representing the result
 	 * @throws IOException              if reading errors occur
 	 * @throws IllegalArgumentException if the header values are broken
 	 * @throws IllegalAccessException   if the session isn't valid
 	 */
-	protected CustomAccessHttpResponse executeRequest(HttpRequestBase request, String[] headerKeys, String[] headerVals)
+	protected CustomAccessHttpResponse executeRequest(Request.Builder requestBuilder, String[] headerKeys, String[] headerVals)
 			throws IOException, IllegalArgumentException, IllegalAccessException {
 		if (headerKeys.length != headerVals.length)
 			throw new IllegalArgumentException("headerVals has different length than headerKeys!");
-		for (int i = 0; i < headerKeys.length; i++)
-			request.addHeader(headerKeys[i], headerVals[i]);
-		HttpResponse response = client.getHttpClient().execute(request);
-		if (this.isErrorCode(response.getStatusLine().getStatusCode()))
+		for (int i = 0; i < headerKeys.length; i++) {
+			requestBuilder.addHeader(headerKeys[i], headerVals[i]);
+		}
+		Request request = requestBuilder.build();
+		Response response = client.newCall(request).execute();
+		if (this.isErrorCode(response.code()))
 			throw new IllegalAccessException("Session is not valid!");
-		return new CustomAccessHttpResponse(response, request);
-	}
-
-	/**
-	 * Shuts the client down.
-	 */
-	public void shutdown() {
-		this.client.shutdown();
+		return new CustomAccessHttpResponse(response);
 	}
 
 }

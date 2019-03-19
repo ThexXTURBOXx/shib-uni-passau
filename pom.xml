@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
@@ -10,7 +11,7 @@
 
     <groupId>de.femtopedia.studip</groupId>
     <artifactId>shib-uni-passau</artifactId>
-    <version>1.4.3-SNAPSHOT</version>
+    <version>1.5-SNAPSHOT</version>
     <name>Shibboleth-Uni-Passau</name>
     <description>Allows authentication with Uni Passau's Shibboleth SSO</description>
     <url>https://github.com/ThexXTURBOXx/shib-uni-passau</url>
@@ -41,22 +42,27 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.google.http-client</groupId>
-            <artifactId>google-http-client-apache</artifactId>
-            <version>1.28.0</version>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>3.14.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>oauth.signpost</groupId>
-            <artifactId>signpost-commonshttp4</artifactId>
+            <artifactId>signpost-core</artifactId>
             <version>1.2.1.2</version>
             <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.httpcomponents</groupId>
-                    <artifactId>httpcore</artifactId>
-                </exclusion>
-            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>se.akerfeldt</groupId>
+            <artifactId>okhttp-signpost</artifactId>
+            <version>1.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.riversun</groupId>
+            <artifactId>okhttp3-cookie-helper</artifactId>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 
