@@ -9,7 +9,7 @@
 This is a simple library for Java handling the Shibboleth Login Authentication for the University of Passau.
 
 ## Sample Project
-There is a [Repository available](https://github.com/ThexXTURBOXx/studip-app-uni-passau), including source code.<br>
+There are [this repository](https://github.com/ThexXTURBOXx/studip-uni-passau) and [this repository](https://github.com/ThexXTURBOXx/studip-app-uni-passau) available, including source code.<br>
 And of course its [release APK](http://femtopedia.de/studip/index.php).
 
 ## Including as dependency (Gradle)
@@ -38,9 +38,37 @@ Add the following snippet to your **pom.xml** and change the version number:
 ```
 
 ## Older builds
-Older builds are available in my Maven repo here: [http://femtopedia.de/maven](http://femtopedia.de/maven)
+Older (unsupported) builds are available in my Maven repo here: [http://femtopedia.de/maven](http://femtopedia.de/maven)
 
-## Basic Usage
+## Basic Usage (OAuth)
+```Java
+//Instantiate the Client
+OAuthClient client = new OAuthClient();
+try {
+    //Set OAuth Credentials
+    client.setupOAuth("CONSUMER_KEY", "CONSUMER_SECRET");
+    //Print Authorization Url
+    System.out.println(client.getAuthorizationUrl("callback_scheme://callback_url"));
+    //Wait for user to input Verification Code
+    client.verifyAccess(new Scanner(System.in).nextLine());
+    //Get an example response from StudIP'S API
+    CustomAccessHttpResponse response = client.get("https://studip.uni-passau.de/studip/api.php/user");
+    try {
+        //Print every line of the response's body content
+        for (String line : response.readLines()) {
+            System.out.println(line);
+        }
+    } finally {
+        //Close the response
+        response.close();
+    }
+} catch (IOException | IllegalAccessException | OAuthException e) {
+    //Print errors
+    e.printStackTrace();
+}
+```
+
+## Basic Usage (Shibboleth, Unsupported)
 ```Java
 //Instantiate the Client
 ShibbolethClient client = new ShibbolethClient();
@@ -48,28 +76,22 @@ try {
     //Authenticate using your Login Credentials
     client.authenticate("USERNAME", "PASSWORD");
     //Get an example response from StudIP'S API
-    ShibHttpResponse response = client.get("https://studip.uni-passau.de/studip/api.php/user");
-    //Get the site's content
-    InputStream stream = response.getResponse().getEntity().getContent();
+    CustomAccessHttpResponse response = client.get("https://studip.uni-passau.de/studip/api.php/user");
     try {
-        //Print every line
-        for (String line : ShibbolethClient.readLines(stream))
+        //Print every line of the response's body content
+        for (String line : response.readLines()) {
             System.out.println(line);
-        //Close the stream
-        stream.close();
+        }
     } finally {
         //Close the response
         response.close();
     }
-} catch (IOException | IllegalAccessException e) {
+} catch (IOException | IllegalAccessException | OAuthException e) {
     //Print errors
     e.printStackTrace();
-} finally {
-    //Shutdown the Client after you are done.
-    client.shutdown();
 }
 ```
 
 ## How it works
 I tested the server for literally hours to work out, how the authentication works (just using backwards engineering, Firefox's Network Debugging feature and Postman).<br>
-The library uses the Google HTTP Client Wrapper for the Apache HTTP Client Library, so it's compatible with Android and - hopefully for the most part - every platform.
+The library uses the OkHttp3-Client, so it's compatible with Android SDK >= 21 and - hopefully for the most part - every platform.

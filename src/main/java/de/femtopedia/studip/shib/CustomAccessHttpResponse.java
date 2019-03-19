@@ -2,8 +2,10 @@ package de.femtopedia.studip.shib;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * A class for easing handling of HTTP Responses.
@@ -63,7 +65,10 @@ public class CustomAccessHttpResponse {
 	 * @throws IOException when reading errors occur
 	 */
 	public List<String> readLines(String encoding) throws IOException {
-		try (InputStream read = getResponse().body().byteStream()) {
+		ResponseBody body = getResponse().body();
+		if (body == null)
+			return new ArrayList<>();
+		try (InputStream read = body.byteStream()) {
 			return CustomAccessClient.readLines(read, encoding);
 		}
 	}
