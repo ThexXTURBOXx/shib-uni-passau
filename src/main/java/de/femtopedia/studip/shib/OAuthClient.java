@@ -178,7 +178,7 @@ public class OAuthClient extends CustomAccessClient {
 	 * @throws OAuthException if any OAuth errors occur
 	 */
 	public Request sign(Request request) throws OAuthException {
-		if (request.url().host().equals("studip.uni-passau.de"))
+		if (request.url().host().equalsIgnoreCase("studip.uni-passau.de"))
 			return (Request) consumer.sign(request).unwrap();
 		return request;
 	}

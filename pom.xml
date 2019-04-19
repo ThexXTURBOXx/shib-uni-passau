@@ -11,7 +11,7 @@
 
     <groupId>de.femtopedia.studip</groupId>
     <artifactId>shib-uni-passau</artifactId>
-    <version>1.5.1-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
     <name>Shibboleth-Uni-Passau</name>
     <description>Allows authentication with Uni Passau's Shibboleth SSO</description>
     <url>https://github.com/ThexXTURBOXx/shib-uni-passau</url>
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>3.14.0</version>
+            <version>3.14.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -98,7 +98,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.4</version>
+                <version>3.1.0</version>
                 <executions>
                     <execution>
                         <id>attach-javadoc</id>
@@ -129,7 +129,7 @@
                     <dependency>
                         <groupId>com.puppycrawl.tools</groupId>
                         <artifactId>checkstyle</artifactId>
-                        <version>8.18</version>
+                        <version>8.19</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -160,19 +160,19 @@
                     <dependency>
                         <groupId>org.apache.maven.scm</groupId>
                         <artifactId>maven-scm-api</artifactId>
-                        <version>1.10.0</version>
+                        <version>1.11.2</version>
                     </dependency>
                     <dependency>
                         <groupId>org.apache.maven.scm</groupId>
                         <artifactId>maven-scm-provider-gitexe</artifactId>
-                        <version>1.10.0</version>
+                        <version>1.11.2</version>
                     </dependency>
                 </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.7</version>
+                <version>1.6.8</version>
                 <extensions>true</extensions>
                 <configuration>
                     <serverId>ossrh</serverId>
