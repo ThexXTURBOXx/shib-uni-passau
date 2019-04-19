@@ -94,4 +94,5 @@ try {
 
 ## How it works
 I tested the server for literally hours to work out, how the authentication works (just using backwards engineering, Firefox's Network Debugging feature and Postman).<br>
-The library uses the OkHttp3-Client, so it's compatible with Android SDK >= 21 and - hopefully for the most part - every platform.
+The library uses the OkHttp3-Client, so it's compatible with Android SDK >= 21 and - hopefully for the most part - every platform.<br>
+If you need compatibility with older Android SDKs, then check out older builds (<= 1.4.2), which use the Apache HTTP Client. But please be aware then, that those builds are highly outdated and not maintained anymore. Use at your own risk!
