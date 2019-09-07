@@ -4,27 +4,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /**
  * A class for easing handling of HTTP Responses.
  */
+@AllArgsConstructor
 public class CustomAccessHttpResponse {
 
 	/**
 	 * The response from the server.
 	 */
+	@Getter
 	private Response response;
-
-	/**
-	 * Initializes a new {@link CustomAccessHttpResponse} instance.
-	 *
-	 * @param response The response from the server
-	 */
-	CustomAccessHttpResponse(Response response) {
-		this.response = response;
-	}
 
 	/**
 	 * Returns the content of the HttpEntity.
@@ -71,15 +66,6 @@ public class CustomAccessHttpResponse {
 		try (InputStream read = body.byteStream()) {
 			return CustomAccessClient.readLines(read, encoding);
 		}
-	}
-
-	/**
-	 * Returns the response from the server.
-	 *
-	 * @return the response from the server
-	 */
-	public Response getResponse() {
-		return response;
 	}
 
 	/**

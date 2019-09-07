@@ -3,7 +3,6 @@ package de.femtopedia.studip.shib;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import javafx.util.Pair;
 import oauth.signpost.exception.OAuthException;
 import okhttp3.Cookie;
 import okhttp3.Request;

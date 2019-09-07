@@ -2,7 +2,6 @@ package de.femtopedia.studip.shib;
 
 import java.io.IOException;
 import java.util.List;
-import javafx.util.Pair;
 import oauth.signpost.exception.OAuthException;
 import okhttp3.Request;
 import se.akerfeldt.okhttp.signpost.OkHttpOAuthConsumer;
