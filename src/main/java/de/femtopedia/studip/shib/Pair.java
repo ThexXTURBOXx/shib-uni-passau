@@ -13,7 +13,14 @@ import lombok.Data;
 @AllArgsConstructor
 public class Pair<A, B> {
 
-	private A key;
-	private B value;
+    /**
+     * The key of the pair.
+     */
+    private A key;
+
+    /**
+     * The value of the pair.
+     */
+    private B value;
 
 }
