@@ -83,11 +83,11 @@ public class OAuthClient extends CustomAccessClient {
     /**
      * Returns the used Access Token.
      *
-     * @return The currently used Access Token (index 0) and Access Token Secret
-     *         (index 1).
+     * @return The currently used Access Token (key) and Access Token Secret
+     *         (value).
      */
-    public String[] getToken() {
-        return new String[]{consumer.getToken(), consumer.getTokenSecret()};
+    public Pair<String, String> getToken() {
+        return new Pair<>(consumer.getToken(), consumer.getTokenSecret());
     }
 
     /**
