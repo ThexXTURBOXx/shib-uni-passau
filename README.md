@@ -16,9 +16,7 @@ And of course its [release APK](http://femtopedia.de/studip/index.php).
 Add the following snippet to your **build.gradle** and change the version number:
 ```Gradle
 repositories {
-    maven {
-        jcenter()
-    }
+    mavenCentral()
 }
 dependencies {
     implementation 'de.femtopedia.studip:shib-uni-passau:...'
@@ -41,7 +39,7 @@ Add the following snippet to your **pom.xml** and change the version number:
 Older (unsupported) builds are available in my Maven repo here: [http://femtopedia.de/maven](http://femtopedia.de/maven)
 
 ## Basic Usage (OAuth)
-```Java
+```java
 //Instantiate the Client
 OAuthClient client = new OAuthClient();
 try {
@@ -51,17 +49,14 @@ try {
     System.out.println(client.getAuthorizationUrl("callback_scheme://callback_url"));
     //Wait for user to input Verification Code
     client.verifyAccess(new Scanner(System.in).nextLine());
-    //Get an example response from StudIP'S API
-    CustomAccessHttpResponse response = client.get("https://studip.uni-passau.de/studip/api.php/user");
-    try {
+    //Get an example response from StudIP's API
+    try (CustomAccessHttpResponse response = client.get("https://studip.uni-passau.de/studip/api.php/user")) {
         //Print every line of the response's body content
         for (String line : response.readLines()) {
             System.out.println(line);
         }
-    } finally {
-        //Close the response
-        response.close();
     }
+    //Close the response
 } catch (IOException | IllegalAccessException | OAuthException e) {
     //Print errors
     e.printStackTrace();
@@ -75,17 +70,14 @@ ShibbolethClient client = new ShibbolethClient();
 try {
     //Authenticate using your Login Credentials
     client.authenticate("USERNAME", "PASSWORD");
-    //Get an example response from StudIP'S API
-    CustomAccessHttpResponse response = client.get("https://studip.uni-passau.de/studip/api.php/user");
-    try {
+    //Get an example response from StudIP's API
+    try (CustomAccessHttpResponse response = client.get("https://studip.uni-passau.de/studip/api.php/user")) {
         //Print every line of the response's body content
         for (String line : response.readLines()) {
             System.out.println(line);
         }
-    } finally {
-        //Close the response
-        response.close();
     }
+    //Close the response
 } catch (IOException | IllegalAccessException | OAuthException e) {
     //Print errors
     e.printStackTrace();
