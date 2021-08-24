@@ -1,5 +1,6 @@
 package de.femtopedia.studip.shib;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import okhttp3.ResponseBody;
  * A class for easing handling of HTTP Responses.
  */
 @AllArgsConstructor
-public class CustomAccessHttpResponse {
+public class CustomAccessHttpResponse implements Closeable {
 
     /**
      * The response from the server.
@@ -72,8 +73,11 @@ public class CustomAccessHttpResponse {
     /**
      * Closes this HTTP Response and its request.
      */
+    @Override
     public void close() {
-        response.close();
+        if (response != null) {
+            response.close();
+        }
     }
 
 }

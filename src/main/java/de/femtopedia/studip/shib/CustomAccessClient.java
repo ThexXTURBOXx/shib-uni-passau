@@ -124,16 +124,11 @@ public abstract class CustomAccessClient {
      * @throws OAuthException if any OAuth errors occur.
      */
     public boolean isSessionValid() throws IOException, OAuthException {
-        CustomAccessHttpResponse response = null;
-        try {
-            response = get("https://studip.uni-passau.de/studip/api.php");
+        try (CustomAccessHttpResponse ignored
+                     = get("https://studip.uni-passau.de/studip/api.php")) {
             return true;
         } catch (IllegalAccessException e) {
             return false;
-        } finally {
-            if (response != null) {
-                response.close();
-            }
         }
     }
 
