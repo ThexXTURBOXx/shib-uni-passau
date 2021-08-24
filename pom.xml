@@ -11,7 +11,7 @@
 
     <groupId>de.femtopedia.studip</groupId>
     <artifactId>shib-uni-passau</artifactId>
-    <version>1.9</version>
+    <version>1.9.1-SNAPSHOT</version>
     <name>Shibboleth-Uni-Passau</name>
     <description>Allows authentication with Uni Passau's Shibboleth SSO
     </description>
@@ -91,7 +91,7 @@
             scm:git:git@github.com:ThexXTURBOXx/shib-uni-passau.git
         </developerConnection>
         <url>https://github.com/ThexXTURBOXx/shib-uni-passau</url>
-        <tag>1.9</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <build>
