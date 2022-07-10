@@ -3,7 +3,6 @@ package de.femtopedia.studip.shib;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -61,11 +60,8 @@ public class CustomAccessHttpResponse implements Closeable {
      * @throws IOException when reading errors occur
      */
     public List<String> readLines(String encoding) throws IOException {
-        ResponseBody body = getResponse().body();
-        if (body == null) {
-            return new ArrayList<>();
-        }
-        try (InputStream read = body.byteStream()) {
+        try (ResponseBody body = getResponse().body();
+             InputStream read = body.byteStream()) {
             return CustomAccessClient.readLines(read, encoding);
         }
     }

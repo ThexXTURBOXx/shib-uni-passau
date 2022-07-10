@@ -81,6 +81,14 @@ public class ShibbolethClient extends CustomAccessClient {
             response.close();
 
             response = get("https://sso.uni-passau.de" + loc);
+            List<String> lines = response.readLines();
+            String csrfToken = null;
+            for (String line : lines) {
+                if (line.contains("name=\"csrf_token\"")) {
+                    csrfToken = line.split("name=\"csrf_token\""
+                            + " value=\"")[1].split("\"\\s*/>")[0];
+                }
+            }
             response.close();
 
             List<Pair<String, String>> formList = new ArrayList<>();
@@ -89,11 +97,12 @@ public class ShibbolethClient extends CustomAccessClient {
             formList.add(new Pair<>("donotcache_dummy", "1"));
             formList.add(new Pair<>("j_password", password));
             formList.add(new Pair<>("j_username", username));
+            formList.add(new Pair<>("csrf_token", csrfToken));
             response = post("https://sso.uni-passau.de" + loc,
                     new String[]{"Referer", "Upgrade-Insecure-Requests"},
                     new String[]{"https://sso.uni-passau.de" + loc, "1"},
                     formList);
-            List<String> lines = response.readLines();
+            lines = response.readLines();
             if (lines.isEmpty()
                     || (lines.get(0).equals("") && lines.size() == 1)) {
                 throw new IllegalAccessException("Wrong credentials!");
@@ -103,11 +112,11 @@ public class ShibbolethClient extends CustomAccessClient {
             for (String line : lines) {
                 if (line.contains("name=\"RelayState\"")) {
                     relaystate = line.split("name=\"RelayState\""
-                            + " value=\"")[1].split("\"/>")[0];
+                            + " value=\"")[1].split("\"\\s*/>")[0];
                 }
                 if (line.contains("name=\"SAMLResponse\"")) {
                     samlresponse = line.split("name=\"SAMLResponse\""
-                            + " value=\"")[1].split("\"/>")[0];
+                            + " value=\"")[1].split("\"\\s*/>")[0];
                 }
             }
             if (relaystate == null || samlresponse == null) {
