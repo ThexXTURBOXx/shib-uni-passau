@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Data;
 import oauth.signpost.exception.OAuthException;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
@@ -16,6 +17,7 @@ import org.riversun.okhttp3.OkHttp3CookieHelper;
 /**
  * Class representing a HttpClient with custom authorization and Sessions.
  */
+@Data
 public abstract class CustomAccessClient {
 
     /**
@@ -124,8 +126,8 @@ public abstract class CustomAccessClient {
      * @throws OAuthException if any OAuth errors occur.
      */
     public boolean isSessionValid() throws IOException, OAuthException {
-        try (CustomAccessHttpResponse ignored = get("https://studip."
-                + "uni-passau.de/studip/api.php/user/")) {
+        try (CustomAccessHttpResponse ignored =
+                     get("https://studip.uni-passau.de/studip/api.php/user/")) {
             return true;
         } catch (IllegalAccessException e) {
             return false;
@@ -321,7 +323,7 @@ public abstract class CustomAccessClient {
             IllegalAccessException {
         if (headerKeys.length != headerVals.length) {
             throw new IllegalArgumentException("headerVals has different length"
-                    + " than headerKeys!");
+                                               + " than headerKeys!");
         }
         for (int i = 0; i < headerKeys.length; i++) {
             requestBuilder.addHeader(headerKeys[i], headerVals[i]);
@@ -332,24 +334,6 @@ public abstract class CustomAccessClient {
             throw new IllegalAccessException("Session is not valid!");
         }
         return new CustomAccessHttpResponse(response);
-    }
-
-    /**
-     * Returns the instance of the OkHttp-Client to use.
-     *
-     * @return the instance of the OkHttp-Client to use.
-     */
-    public OkHttpClient getClient() {
-        return client;
-    }
-
-    /**
-     * Returns the Helper instance for managing Cookies.
-     *
-     * @return the Helper instance for managing Cookies.
-     */
-    public OkHttp3CookieHelper getCookieHelper() {
-        return cookieHelper;
     }
 
 }

@@ -1,8 +1,5 @@
 # Shibboleth API - Uni Passau
 <p align="center">
-  <a href="https://lgtm.com/projects/g/ThexXTURBOXx/shib-uni-passau/alerts/"><img alt="Total alerts" src="https://img.shields.io/lgtm/alerts/g/ThexXTURBOXx/shib-uni-passau.svg?logo=lgtm&logoWidth=18"/></a>
-  <a href="https://lgtm.com/projects/g/ThexXTURBOXx/shib-uni-passau/context:java"><img alt="Language grade: Java" src="https://img.shields.io/lgtm/grade/java/g/ThexXTURBOXx/shib-uni-passau.svg?logo=lgtm&logoWidth=18"/></a>
-  <a href="https://travis-ci.com/ThexXTURBOXx/shib-uni-passau"><img src="https://travis-ci.com/ThexXTURBOXx/shib-uni-passau.svg?branch=master"></a>
   <a href="https://maven-badges.herokuapp.com/maven-central/de.femtopedia.studip/shib-uni-passau"><img src="https://maven-badges.herokuapp.com/maven-central/de.femtopedia.studip/shib-uni-passau/badge.svg"></a>
   <a href="https://github.com/ThexXTURBOXx/shib-uni-passau/releases"><img src="https://img.shields.io/github/release/thexxturboxx/shib-uni-passau.svg"></a>
 </p>

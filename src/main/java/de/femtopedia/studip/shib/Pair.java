@@ -1,6 +1,5 @@
 package de.femtopedia.studip.shib;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
@@ -10,17 +9,16 @@ import lombok.Data;
  * @param <B> Value type
  */
 @Data
-@AllArgsConstructor
 public class Pair<A, B> {
 
     /**
      * The key of the pair.
      */
-    private A key;
+    private final A key;
 
     /**
      * The value of the pair.
      */
-    private B value;
+    private final B value;
 
 }

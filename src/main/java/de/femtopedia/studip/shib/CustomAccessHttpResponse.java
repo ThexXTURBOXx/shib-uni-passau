@@ -4,21 +4,19 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /**
  * A class for easing handling of HTTP Responses.
  */
-@AllArgsConstructor
+@Data
 public class CustomAccessHttpResponse implements Closeable {
 
     /**
      * The response from the server.
      */
-    @Getter
     private final Response response;
 
     /**

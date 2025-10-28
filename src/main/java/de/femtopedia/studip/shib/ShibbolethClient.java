@@ -3,6 +3,7 @@ package de.femtopedia.studip.shib;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.NoArgsConstructor;
 import oauth.signpost.exception.OAuthException;
 import okhttp3.Cookie;
 import okhttp3.Request;
@@ -10,10 +11,13 @@ import okhttp3.Request;
 /**
  * A simple wrapper for the communication with Uni Passau's Shibboleth SSO.
  *
- * @deprecated This class is still functional, but you should use
- *         OAuth Authentication (see {@link OAuthClient}) instead.
+ * @deprecated This class was still functional until 27th October 2025.
+ *         Now, you need to migrate to OAuth Authentication instead
+ *         (see {@link OAuthClient}) as Shibboleth authentication
+ *         is not available anymore...
  */
 @Deprecated
+@NoArgsConstructor
 public class ShibbolethClient extends CustomAccessClient {
 
     /**
@@ -67,12 +71,12 @@ public class ShibbolethClient extends CustomAccessClient {
             response.close();
 
             response = get("https://studip.uni-passau.de/studip/index.php"
-                    + "?again=yes&sso=shib");
+                           + "?again=yes&sso=shib");
             response.close();
 
             response = get("https://studip.uni-passau.de/secure/studip-sp.php"
-                    + "?target=https%3A%2F%2Fstudip.uni-passau.de%2Fstudip"
-                    + "%2Findex.php%3Fagain%3Dyes%26sso%3Dshib");
+                           + "?target=https%3A%2F%2Fstudip.uni-passau.de%2Fstudip"
+                           + "%2Findex.php%3Fagain%3Dyes%26sso%3Dshib");
             String ssoSAML = response.getResponse().header("location");
             response.close();
 
@@ -85,13 +89,41 @@ public class ShibbolethClient extends CustomAccessClient {
             String csrfToken = null;
             for (String line : lines) {
                 if (line.contains("name=\"csrf_token\"")) {
-                    csrfToken = line.split("name=\"csrf_token\""
-                            + " value=\"")[1].split("\"\\s*/>")[0];
+                    csrfToken = line.split("name=\"csrf_token\"\\s*value=\"", 3)[1]
+                            .split("\"\\s*/>", 2)[0];
                 }
             }
             response.close();
 
             List<Pair<String, String>> formList = new ArrayList<>();
+            formList.add(new Pair<>("shib_idp_ls_exception.shib_idp_session_ss", ""));
+            formList.add(new Pair<>("shib_idp_ls_success.shib_idp_session_ss", "true"));
+            formList.add(new Pair<>("shib_idp_ls_value.shib_idp_session_ss", ""));
+            formList.add(new Pair<>("shib_idp_ls_exception.shib_idp_persistent_ss", ""));
+            formList.add(new Pair<>("shib_idp_ls_success.shib_idp_persistent_ss", "true"));
+            formList.add(new Pair<>("shib_idp_ls_value.shib_idp_persistent_ss", ""));
+            formList.add(new Pair<>("shib_idp_ls_supported", "true"));
+            formList.add(new Pair<>("_eventId_proceed", ""));
+            formList.add(new Pair<>("csrf_token", csrfToken));
+            response = post("https://sso.uni-passau.de" + loc,
+                    new String[]{"Referer", "Upgrade-Insecure-Requests"},
+                    new String[]{"https://sso.uni-passau.de" + loc, "1"},
+                    formList);
+            loc = response.getResponse().header("location");
+            response.close();
+
+            response = get("https://sso.uni-passau.de" + loc);
+            lines = response.readLines();
+            csrfToken = null;
+            for (String line : lines) {
+                if (line.contains("name=\"csrf_token\"")) {
+                    csrfToken = line.split("name=\"csrf_token\"\\s*value=\"", 3)[1]
+                            .split("\"\\s*/>", 2)[0];
+                }
+            }
+            response.close();
+
+            formList = new ArrayList<>();
             formList.add(new Pair<>("_eventId_proceed", ""));
             formList.add(new Pair<>("donotcache", ""));
             formList.add(new Pair<>("donotcache_dummy", "1"));
@@ -104,23 +136,24 @@ public class ShibbolethClient extends CustomAccessClient {
                     formList);
             lines = response.readLines();
             if (lines.isEmpty()
-                    || (lines.get(0).equals("") && lines.size() == 1)) {
+                || (lines.get(0).isEmpty() && lines.size() == 1)) {
                 throw new IllegalAccessException("Wrong credentials!");
             }
             String relaystate = null;
             String samlresponse = null;
             for (String line : lines) {
                 if (line.contains("name=\"RelayState\"")) {
-                    relaystate = line.split("name=\"RelayState\""
-                            + " value=\"")[1].split("\"\\s*/>")[0];
+                    relaystate = line.split("name=\"RelayState\"\\s*value=\"", 3)[1]
+                            .split("\"\\s*/>", 2)[0];
                 }
                 if (line.contains("name=\"SAMLResponse\"")) {
-                    samlresponse = line.split("name=\"SAMLResponse\""
-                            + " value=\"")[1].split("\"\\s*/>")[0];
+                    samlresponse = line.split("name=\"SAMLResponse\"\\s*value=\"", 3)[1]
+                            .split("\"\\s*/>", 2)[0];
                 }
             }
             if (relaystate == null || samlresponse == null) {
-                throw new IllegalStateException("RelayState is " + relaystate
+                throw new IllegalStateException(
+                        "RelayState is " + relaystate
                         + " and SAMLResponse is " + samlresponse);
             }
             response.close();
@@ -135,8 +168,8 @@ public class ShibbolethClient extends CustomAccessClient {
             response.close();
 
             response = get("https://studip.uni-passau.de/secure/studip-sp.php"
-                    + "?target=https%3A%2F%2Fstudip.uni-passau.de%2Fstudip"
-                    + "%2Findex.php%3Fagain%3Dyes%26sso%3Dshib");
+                           + "?target=https%3A%2F%2Fstudip.uni-passau.de%2Fstudip"
+                           + "%2Findex.php%3Fagain%3Dyes%26sso%3Dshib");
             String semurl = response.getResponse().header("location");
             response.close();
 
@@ -291,6 +324,13 @@ public class ShibbolethClient extends CustomAccessClient {
     @Override
     public boolean isErrorCode(int statusCode) {
         return statusCode == 401;
+    }
+
+    public static void main(String[] args) throws Throwable {
+        ShibbolethClient client = new ShibbolethClient();
+        client.authenticate("mexis01", "ryAb4nUsEVbyyazm42dQ8T");
+        client.get("https://studip.uni-passau.de/studip/api.php/user").readLines()
+                .forEach(System.out::println);
     }
 
 }

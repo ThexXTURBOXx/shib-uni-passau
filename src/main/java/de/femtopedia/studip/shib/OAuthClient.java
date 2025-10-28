@@ -2,6 +2,7 @@ package de.femtopedia.studip.shib;
 
 import java.io.IOException;
 import java.util.List;
+import lombok.NoArgsConstructor;
 import oauth.signpost.exception.OAuthException;
 import okhttp3.Request;
 import se.akerfeldt.okhttp.signpost.OkHttpOAuthConsumer;
@@ -10,6 +11,7 @@ import se.akerfeldt.okhttp.signpost.OkHttpOAuthProvider;
 /**
  * A simple wrapper for the communication with Uni Passau's Stud.IP OAuth.
  */
+@NoArgsConstructor
 public class OAuthClient extends CustomAccessClient {
 
     /**
@@ -22,6 +24,10 @@ public class OAuthClient extends CustomAccessClient {
      */
     private OkHttpOAuthProvider provider;
 
+    public OAuthClient(String consumerKey, String consumerSecret) {
+        setupOAuth(consumerKey, consumerSecret);
+    }
+
     /**
      * Sets up the OAuth API.
      * This is the first function to call in the OAuth process.
@@ -33,11 +39,11 @@ public class OAuthClient extends CustomAccessClient {
         consumer = new OkHttpOAuthConsumer(consumerKey, consumerSecret);
         provider = new OkHttpOAuthProvider(
                 "https://studip.uni-passau.de/studip/dispatch.php"
-                        + "/api/oauth/request_token",
+                + "/api/oauth/request_token",
                 "https://studip.uni-passau.de/studip/dispatch.php"
-                        + "/api/oauth/access_token",
+                + "/api/oauth/access_token",
                 "https://studip.uni-passau.de/studip/dispatch.php"
-                        + "/api/oauth/authorize");
+                + "/api/oauth/authorize");
         provider.setOkHttpClient(getClient());
     }
 
